@@ -9,6 +9,10 @@ class PuzzleNode:
 
     def generate_children(self):
         empty_cell = self.find_empty_cell(self.state_matrix)
+
+        if empty_cell is None:
+            return []
+
         x, y = empty_cell
         possible_moves = [[x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]]
         children = []
@@ -35,7 +39,7 @@ class PuzzleNode:
     def find_empty_cell(self, state):
         for i in range(len(state)):
             for j in range(len(state)):
-                if state[i][j] == "_":
+                if state[i][j] == "_" or state[i][j] == "-":
                     return i, j
 
 
@@ -49,6 +53,14 @@ class PuzzleSolver:
         matrix = []
         for _ in range(self.size):
             row = input().split(" ")
+            row = [
+                (
+                    int(cell)
+                    if cell.isdigit() or (cell[0] == "-" and cell[1:].isdigit())
+                    else cell
+                )
+                for cell in row
+            ]
             matrix.append(row)
         return matrix
 
@@ -65,6 +77,7 @@ class PuzzleSolver:
                 if (
                     current_state[i][j] != goal_state[i][j]
                     and current_state[i][j] != "_"
+                    and current_state[i][j] != "-"
                 ):
                     count += 1
         return count
@@ -85,7 +98,7 @@ class PuzzleSolver:
 
             print("\nCurrent State:")
             for row in current_node.state_matrix:
-                print(" ".join(row))
+                print(" ".join(map(str, row)))
 
             if (
                 self.calculate_heuristic_value(current_node.state_matrix, goal_matrix)
