@@ -2,10 +2,11 @@ import copy
 
 
 class PuzzleNode:
-    def __init__(self, state_matrix, level, heuristic_value):
+
+    def __init__(self, state_matrix, level, f_val):
         self.state_matrix = state_matrix
         self.level = level
-        self.heuristic_value = heuristic_value
+        self.f_val = f_val
 
     def generate_children(self):
         empty_cell = self.find_empty_cell(self.state_matrix)
@@ -22,13 +23,19 @@ class PuzzleNode:
             if child_state is not None:
                 child_node = PuzzleNode(child_state, self.level + 1, 0)
                 children.append(child_node)
-
         return children
 
-    def move_tile(self, state, x1, y1, x2, y2):
-        size = len(state)
+    def find_empty_cell(self, state_matrix):
+        for i in range(len(state_matrix)):
+            for j in range(len(state_matrix)):
+                if state_matrix[i][j] == "-":
+                    return (i, j)
+
+    def move_tile(self, state_matrix, x1, y1, x2, y2):
+        size = len(state_matrix)
+
         if 0 <= x2 < size and 0 <= y2 < size:
-            new_state = copy.deepcopy(state)
+            new_state = copy.deepcopy(state_matrix)
             temp = new_state[x2][y2]
             new_state[x2][y2] = new_state[x1][y1]
             new_state[x1][y1] = temp
@@ -36,31 +43,29 @@ class PuzzleNode:
         else:
             return None
 
-    def find_empty_cell(self, state):
-        for i in range(len(state)):
-            for j in range(len(state)):
-                if state[i][j] == "_" or state[i][j] == "-":
-                    return i, j
-
 
 class PuzzleSolver:
-    def __init__(self, size):
+    def __init__(
+        self,
+        size,
+    ):
         self.size = size
         self.open_list = []
         self.closed_list = []
 
     def accept_matrix(self):
-            matrix = []
-            for _ in range(self.size):
-                row = input("Enter row separated by space: ").split()
-                processed_row = []
-                for cell in row:
-                    if cell == "-":
-                        processed_row.append(cell)  # Append hyphen as it is
-                    else:
-                        processed_row.append(int(cell))  # Convert other values to integers
-                matrix.append(processed_row)
-            return matrix
+        matrix = []
+
+        for _ in range(self.size):
+            row = input("Enter the row elements separated by space1 :").split()
+            processed_row = []
+            for cell in row:
+                if cell == "-":
+                    processed_row.append(cell)
+                else:
+                    processed_row.append(int(cell))
+            matrix.append(processed_row)
+        return matrix
 
     def calculate_f_value(self, current_node, goal_matrix):
         return (
@@ -68,12 +73,12 @@ class PuzzleSolver:
             + current_node.level
         )
 
-    def calculate_heuristic_value(self, current_state, goal_state):
+    def calculate_heuristic_value(self, current_state, goal_matrix):
         count = 0
         for i in range(self.size):
             for j in range(self.size):
                 if (
-                    current_state[i][j] != goal_state[i][j]
+                    current_state[i][j] != goal_matrix[i][j]
                     and current_state[i][j] != "_"
                     and current_state[i][j] != "-"
                 ):
@@ -81,13 +86,14 @@ class PuzzleSolver:
         return count
 
     def process_puzzle(self):
-        print("Enter the start state matrix:")
+        print("Enter the Start state matrix ")
         start_matrix = self.accept_matrix()
-        print("Enter the goal state matrix:")
+        print("Enter the End state matrix ")
         goal_matrix = self.accept_matrix()
 
         start_node = PuzzleNode(start_matrix, 0, 0)
-        start_node.heuristic_value = self.calculate_f_value(start_node, goal_matrix)
+
+        start_node.f_value = self.calculate_f_value(start_node, goal_matrix)
 
         self.open_list.append(start_node)
 
@@ -102,20 +108,17 @@ class PuzzleSolver:
                 self.calculate_heuristic_value(current_node.state_matrix, goal_matrix)
                 == 0
             ):
-                print("Goal State Reached!")
+                print("Goal State found")
                 break
 
             for child_node in current_node.generate_children():
-                child_node.heuristic_value = self.calculate_f_value(
-                    child_node, goal_matrix
-                )
+                child_node.f_val = self.calculate_f_value(child_node, goal_matrix)
                 self.open_list.append(child_node)
 
             self.closed_list.append(current_node)
             del self.open_list[0]
-            self.open_list.sort(key=lambda x: x.heuristic_value, reverse=False)
+            self.open_list.sort(key=lambda x: x.f_val, reverse=False)
 
 
-if __name__ == "__main__":
-    puzzle_solver = PuzzleSolver(3)
-    puzzle_solver.process_puzzle()
+puzzleSolver = PuzzleSolver(3)
+puzzleSolver.process_puzzle()
